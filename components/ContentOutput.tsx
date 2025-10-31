@@ -5,6 +5,8 @@ import { TwitterIcon } from './icons/TwitterIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { BookmarkIcon } from './icons/BookmarkIcon';
 import { contentHistoryService } from '../services/contentHistoryService';
+import { FacebookIcon } from './icons/FacebookIcon';
+import { InstagramIcon } from './icons/InstagramIcon';
 
 interface ContentOutputProps {
   content: GeneratedContent | null;
@@ -41,7 +43,7 @@ const Placeholder: React.FC = () => (
 
 
 export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading, error }) => {
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'x'>('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'x' | 'facebook' | 'instagram'>('idle');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 
   const formatForLinkedIn = useCallback((): string => {
@@ -58,7 +60,19 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
     return `${summaryPart}\n\nKey Insights:\n${insightsPart}\n\n#ContentCreation #AI #Insights`.trim();
   }, [content]);
 
-   const copyToClipboard = (text: string, platform: 'linkedin' | 'x') => {
+  const formatForFacebook = useCallback((): string => {
+    if (!content) return '';
+    const insightsText = content.keyInsights.map(insight => `✅ ${insight}`).join('\n');
+    const factsText = content.interestingFacts.map(fact => `🤯 ${fact}`).join('\n');
+    return `${content.summary}\n\n---\n\nHere are the key takeaways:\n${insightsText}\n\nSome surprising facts:\n${factsText}\n\n#FacebookPost #DigitalMarketing #ContentStrategy`;
+  }, [content]);
+
+  const formatForInstagram = useCallback((): string => {
+    if (!content) return '';
+    return `${content.summary}\n.\n.\n.\n#Instagram #ContentCreation #AI #Tech #Business #Marketing #Insights #InstaGood`;
+  }, [content]);
+
+   const copyToClipboard = (text: string, platform: 'linkedin' | 'x' | 'facebook' | 'instagram') => {
     navigator.clipboard.writeText(text).then(() => {
       setCopyStatus(platform);
       setTimeout(() => setCopyStatus('idle'), 3000);
@@ -76,6 +90,18 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
     copyToClipboard(text, 'x');
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleShareOnFacebook = () => {
+    const text = formatForFacebook();
+    copyToClipboard(text, 'facebook');
+    window.open('https://www.facebook.com/', '_blank', 'noopener,noreferrer');
+  };
+  
+  const handleShareOnInstagram = () => {
+    const text = formatForInstagram();
+    copyToClipboard(text, 'instagram');
+    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
   };
 
   const handleSave = () => {
@@ -142,6 +168,14 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
                     <button onClick={handleShareOnX} className="flex items-center gap-2 hover:text-slate-300 transition-colors duration-200">
                         <TwitterIcon className="w-5 h-5" />
                         <span className="text-sm">{copyStatus === 'x' ? 'Copied!' : 'Share'}</span>
+                    </button>
+                     <button onClick={handleShareOnFacebook} className="flex items-center gap-2 hover:text-blue-600 transition-colors duration-200">
+                        <FacebookIcon className="w-5 h-5" />
+                        <span className="text-sm">{copyStatus === 'facebook' ? 'Copied!' : 'Share'}</span>
+                    </button>
+                    <button onClick={handleShareOnInstagram} className="flex items-center gap-2 hover:text-pink-500 transition-colors duration-200">
+                        <InstagramIcon className="w-5 h-5" />
+                        <span className="text-sm">{copyStatus === 'instagram' ? 'Copied!' : 'Share'}</span>
                     </button>
                     <button onClick={handleSave} className="flex items-center gap-2 hover:text-amber-400 transition-colors duration-200">
                         <BookmarkIcon className="w-5 h-5" />

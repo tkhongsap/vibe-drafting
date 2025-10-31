@@ -15,3 +15,9 @@ export interface TrendTopic {
   title: string;
   posts: string;
 }
+
+export interface User {
+  name: string;
+  handle: string;
+  avatarUrl?: string;
+}

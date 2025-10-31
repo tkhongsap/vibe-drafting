@@ -1,12 +1,13 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import type { InputType } from '../App';
-import type { ImageData } from '../types';
+import type { ImageData, User } from '../types';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { LinkIcon } from './icons/LinkIcon';
 
 interface ContentInputProps {
+  user: User;
   inputType: InputType;
   setInputType: (type: InputType) => void;
   inputText: string;
@@ -153,7 +154,7 @@ const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; is
 
 export const ContentInput: React.FC<ContentInputProps> = (props) => {
   const { 
-    inputType, setInputType, inputText, setInputText, urls, setUrls, imageData, setImageData,
+    user, inputType, setInputType, inputText, setInputText, urls, setUrls, imageData, setImageData,
     wordCount, setWordCount, onAnalyze, isLoading, isAnalyzeDisabled 
   } = props;
   
@@ -202,7 +203,15 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
 
   return (
     <div className="flex gap-4">
-      <div className="w-12 h-12 bg-slate-700 rounded-full flex-shrink-0" aria-hidden="true"></div>
+      <div className="w-12 h-12 rounded-full flex-shrink-0" aria-label="User avatar">
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+        ) : (
+          <div className="w-full h-full rounded-full bg-slate-700 flex items-center justify-center font-bold text-lg">
+            {user.name.charAt(0)}
+          </div>
+        )}
+      </div>
       <div className="flex-grow flex flex-col">
           {renderInputArea()}
           <div className="flex items-center justify-between mt-4">

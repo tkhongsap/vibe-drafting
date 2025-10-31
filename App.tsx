@@ -1,10 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ContentInput } from './components/ContentInput';
 import { ContentOutput } from './components/ContentOutput';
 import { analyzeContent } from './services/geminiService';
-import type { GeneratedContent } from './types';
+import type { GeneratedContent, User } from './types';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
+import { LandingPage } from './components/LandingPage';
+import { authService } from './services/authService';
 
 export type InputType = 'text' | 'image' | 'url';
 
@@ -15,6 +17,8 @@ export interface ImageData {
 }
 
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
   const [inputType, setInputType] = useState<InputType>('text');
   const [inputText, setInputText] = useState<string>('');
   const [urls, setUrls] = useState<string[]>([]);
@@ -24,6 +28,22 @@ const App: React.FC = () => {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, []);
+
+  const handleLoginSuccess = (user: User) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = async () => {
+    await authService.signOut();
+    setCurrentUser(null);
+  };
 
   const isAnalyzeDisabled = () => {
     if (isLoading) return true;
@@ -74,17 +94,22 @@ const App: React.FC = () => {
     }
   }, [inputText, inputType, imageData, urls, wordCount]);
 
+  if (!currentUser) {
+    return <LandingPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex justify-center">
       <div className="w-full max-w-7xl flex">
-        <LeftSidebar />
+        <LeftSidebar user={currentUser} onLogout={handleLogout} />
         <div className="flex-grow flex-shrink-0 w-full max-w-[600px] border-x border-slate-700">
             <header className="sticky top-0 z-10 p-4 border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
                 <h1 className="text-xl font-bold">Home</h1>
             </header>
             <main>
                 <div className="p-4 border-b border-slate-700">
-                    <ContentInput 
+                    <ContentInput
+                      user={currentUser}
                       inputType={inputType}
                       setInputType={setInputType}
                       inputText={inputText}

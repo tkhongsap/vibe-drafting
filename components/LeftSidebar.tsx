@@ -4,6 +4,13 @@ import { HashtagIcon } from './icons/HashtagIcon';
 import { BellIcon } from './icons/BellIcon';
 import { UserIcon } from './icons/UserIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { LogoutIcon } from './icons/LogoutIcon';
+import type { User } from '../types';
+
+interface LeftSidebarProps {
+    user: User;
+    onLogout: () => void;
+}
 
 const NavItem: React.FC<{ children: React.ReactNode; active?: boolean; onClick: () => void; }> = ({ children, active, onClick }) => (
     <button onClick={onClick} className={`flex items-center gap-5 p-3 rounded-full hover:bg-slate-800 transition-colors duration-200 w-fit ${active ? 'font-bold' : ''}`}>
@@ -18,7 +25,7 @@ const navItemsList = [
     { name: 'Profile', icon: <UserIcon className="w-7 h-7" /> },
 ];
 
-export const LeftSidebar: React.FC = () => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ user, onLogout }) => {
     const [activeItem, setActiveItem] = useState('Home');
 
     return (
@@ -38,6 +45,10 @@ export const LeftSidebar: React.FC = () => {
                             <span className="text-xl">{item.name}</span>
                         </NavItem>
                     ))}
+                    <NavItem onClick={onLogout}>
+                        <LogoutIcon className="w-7 h-7" />
+                        <span className="text-xl">Logout</span>
+                    </NavItem>
                 </nav>
                 <button className="w-[90%] mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-full text-lg transition-colors duration-200">
                     Post
@@ -45,10 +56,18 @@ export const LeftSidebar: React.FC = () => {
             </div>
             <div className="py-4">
                  <button className="flex items-center gap-3 p-3 rounded-full w-full hover:bg-slate-800">
-                    <div className="w-10 h-10 bg-slate-700 rounded-full flex-shrink-0"></div>
+                    <div className="w-10 h-10 rounded-full flex-shrink-0" aria-label="User avatar">
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-slate-700 flex items-center justify-center font-bold text-lg">
+                            {user.name.charAt(0)}
+                          </div>
+                        )}
+                    </div>
                     <div className="text-left leading-tight">
-                        <p className="font-bold text-slate-200">Your Name</p>
-                        <p className="text-sm text-slate-500">@yourhandle</p>
+                        <p className="font-bold text-slate-200">{user.name}</p>
+                        <p className="text-sm text-slate-500">{user.handle}</p>
                     </div>
                 </button>
             </div>

@@ -1,24 +1,25 @@
 import React, { useState } from 'react';
 import type { User } from '../types';
 import { authService } from '../services/authService';
-import { GoogleIcon } from './icons/GoogleIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { GoogleIcon } from './icons/GoogleIcon';
 
 interface LandingPageProps {
   onLoginSuccess: (user: User) => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
-    setIsSigningIn(true);
+    setIsLoading(true);
     try {
-      const user = await authService.signInWithGoogle();
+      const user = await authService.signIn();
       onLoginSuccess(user);
     } catch (error) {
       console.error("Sign in failed", error);
-      setIsSigningIn(false);
+      // In a real app, you might want to show an error message to the user
+      setIsLoading(false);
     }
   };
 
@@ -35,11 +36,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
         <div className="mt-10">
           <button
             onClick={handleSignIn}
-            disabled={isSigningIn}
-            className="flex items-center justify-center gap-3 w-full sm:w-auto mx-auto bg-white text-slate-800 font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-70 disabled:cursor-wait"
+            disabled={isLoading}
+            className="inline-flex items-center justify-center gap-3 bg-white text-slate-800 font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 disabled:opacity-70"
           >
-            <GoogleIcon />
-            <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
+            <GoogleIcon className="w-6 h-6" />
+            <span>{isLoading ? 'Signing in...' : 'Sign in with Google'}</span>
           </button>
         </div>
       </div>

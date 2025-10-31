@@ -2,35 +2,33 @@ import type { User } from '../types';
 
 const USER_STORAGE_KEY = 'content_studio_user';
 
-// Mock user data for the simulation
 const mockUser: User = {
-  name: 'Alex Johnson',
-  handle: '@alexj',
-  avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Alex%20Johnson`,
+  name: 'Alex Chen',
+  handle: '@alexchen',
+  // Using a placeholder avatar service
+  avatarUrl: `https://i.pravatar.cc/150?u=alexchen`,
 };
 
 export const authService = {
   /**
-   * Simulates signing in with Google.
-   * In a real app, this would involve a Google OAuth flow.
+   * Simulates a sign-in process and returns a mock user.
    */
-  signInWithGoogle: (): Promise<User> => {
+  signIn: (): Promise<User> => {
     return new Promise((resolve) => {
+      // Simulate network delay
       setTimeout(() => {
         try {
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
-          resolve(mockUser);
         } catch (error) {
           console.error("Could not save user to localStorage", error);
-          // Still resolve with the user, but it won't be persisted.
-          resolve(mockUser);
         }
-      }, 500); // Simulate network latency
+        resolve(mockUser);
+      }, 500);
     });
   },
 
   /**
-   * Simulates signing out.
+   * Signs the user out by clearing their session from localStorage.
    */
   signOut: (): Promise<void> => {
      return new Promise((resolve) => {

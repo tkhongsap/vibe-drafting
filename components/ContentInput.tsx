@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
-import type { InputType, ImageData } from '../App';
+import type { InputType } from '../App';
+import type { ImageData } from '../types';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { LinkIcon } from './icons/LinkIcon';
@@ -10,10 +11,10 @@ interface ContentInputProps {
   setInputType: (type: InputType) => void;
   inputText: string;
   setInputText: (text: string) => void;
-  url: string;
-  setUrl: (url: string) => void;
-  imageData: ImageData | null;
-  setImageData: (data: ImageData | null) => void;
+  urls: string[];
+  setUrls: (urls: string[]) => void;
+  imageData: ImageData[];
+  setImageData: (data: ImageData[]) => void;
   wordCount: number;
   setWordCount: (count: number) => void;
   onAnalyze: () => void;
@@ -34,80 +35,133 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; children: Reac
     </button>
 );
 
-const ImageUploader: React.FC<{ imageData: ImageData | null; setImageData: (data: ImageData | null) => void; isLoading: boolean; }> = ({ imageData, setImageData, isLoading }) => {
+const ImageUploader: React.FC<{ imageData: ImageData[]; setImageData: (data: ImageData[]) => void; isLoading: boolean; }> = ({ imageData, setImageData, isLoading }) => {
     const [isDragging, setIsDragging] = useState(false);
 
-    const handleFile = useCallback((file: File) => {
-        if (file && file.type.startsWith('image/')) {
+    const handleFiles = useCallback((files: FileList) => {
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        if (imageFiles.length === 0) return;
+
+        imageFiles.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64 = reader.result?.toString().split(',')[1];
                 if (base64) {
-                    setImageData({ base64, mimeType: file.type, name: file.name });
+                    setImageData(prev => [...prev, { base64, mimeType: file.type, name: file.name }]);
                 }
             };
             reader.readAsDataURL(file);
-        }
+        });
     }, [setImageData]);
+
+    const handleRemoveImage = (index: number) => {
+        setImageData(prev => prev.filter((_, i) => i !== index));
+    };
     
-    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
+    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); };
+    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); };
     const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFile(e.dataTransfer.files[0]);
+        if (e.dataTransfer.files) {
+            handleFiles(e.dataTransfer.files);
         }
     };
     const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            handleFile(e.target.files[0]);
+        if (e.target.files) {
+            handleFiles(e.target.files);
         }
     };
 
-    if (imageData) {
-        return (
-            <div className="flex-grow flex flex-col items-center justify-center text-center">
-                <img src={`data:${imageData.mimeType};base64,${imageData.base64}`} alt="preview" className="max-h-64 rounded-lg shadow-lg mb-4" />
-                <p className="text-slate-400 mb-2 truncate max-w-full px-4">{imageData.name}</p>
-                <button
-                    onClick={() => setImageData(null)}
-                    disabled={isLoading}
-                    className="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
-                >
-                    Remove Image
-                </button>
-            </div>
-        );
-    }
-
     return (
-        <div 
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            className={`flex-grow flex flex-col items-center justify-center border-2 border-dashed rounded-md p-4 transition-colors duration-200 ${isDragging ? 'border-cyan-500 bg-slate-800' : 'border-slate-700'}`}
-        >
-            <PhotoIcon className="w-12 h-12 text-slate-500 mb-2" />
-            <p className="text-slate-400 mb-2">Drag & drop an image here</p>
-            <p className="text-slate-500 text-sm mb-4">or</p>
-            <label className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium py-2 px-4 rounded-md transition-colors duration-200">
-                <span>Select a file</span>
-                <input type="file" className="hidden" accept="image/*" onChange={onFileChange} disabled={isLoading} />
-            </label>
+        <div className="flex-grow flex flex-col">
+            {imageData.length > 0 && (
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4 overflow-y-auto max-h-60 p-1">
+                    {imageData.map((img, index) => (
+                        <div key={index} className="relative group">
+                            <img src={`data:${img.mimeType};base64,${img.base64}`} alt={img.name} className="w-full h-24 object-cover rounded-md shadow-lg" />
+                            <button
+                                onClick={() => handleRemoveImage(index)}
+                                disabled={isLoading}
+                                className="absolute top-1 right-1 bg-red-600/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Remove image"
+                            >
+                                &#x2715;
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div 
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                className={`flex-grow flex flex-col items-center justify-center border-2 border-dashed rounded-md p-4 transition-colors duration-200 ${isDragging ? 'border-cyan-500 bg-slate-800' : 'border-slate-700'}`}
+            >
+                <PhotoIcon className="w-12 h-12 text-slate-500 mb-2" />
+                <p className="text-slate-400 mb-2">Drag & drop images here</p>
+                <p className="text-slate-500 text-sm mb-4">or</p>
+                <label className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                    <span>Select files</span>
+                    <input type="file" className="hidden" accept="image/*" multiple onChange={onFileChange} disabled={isLoading} />
+                </label>
+            </div>
         </div>
     );
 };
 
+const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; isLoading: boolean; }> = ({ urls, setUrls, isLoading }) => {
+    const [currentUrl, setCurrentUrl] = useState('');
+
+    const handleAddUrl = () => {
+        if (currentUrl.trim() && !urls.includes(currentUrl.trim())) {
+            try {
+                // Basic URL validation
+                new URL(currentUrl);
+                setUrls([...urls, currentUrl.trim()]);
+                setCurrentUrl('');
+            } catch (_) {
+                // Simple feedback for invalid URL, could be improved with a stateful error message
+                alert("Please enter a valid URL.");
+            }
+        }
+    };
+
+    const handleRemoveUrl = (index: number) => {
+        setUrls(urls.filter((_, i) => i !== index));
+    };
+
+    return (
+        <div className="flex-grow flex flex-col">
+            <div className="flex gap-2 mb-4">
+                <input
+                    type="url"
+                    value={currentUrl}
+                    onChange={(e) => setCurrentUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddUrl()}
+                    placeholder="https://example.com/article"
+                    className="flex-grow w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors duration-200"
+                    disabled={isLoading}
+                />
+                <button onClick={handleAddUrl} disabled={isLoading || !currentUrl.trim()} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md disabled:opacity-50">Add</button>
+            </div>
+            <div className="flex-grow space-y-2 overflow-y-auto max-h-80 p-1">
+                {urls.map((url, index) => (
+                    <div key={index} className="flex items-center justify-between bg-slate-900/50 p-2 rounded-md">
+                        <span className="text-slate-400 text-sm truncate pr-2">{url}</span>
+                        <button onClick={() => handleRemoveUrl(index)} disabled={isLoading} className="text-red-500 hover:text-red-400 text-lg">&times;</button>
+                    </div>
+                ))}
+                {urls.length === 0 && <p className="text-center text-slate-500 pt-8">Add URLs to analyze.</p>}
+            </div>
+        </div>
+    );
+};
+
+
 export const ContentInput: React.FC<ContentInputProps> = (props) => {
   const { 
-    inputType, setInputType, inputText, setInputText, url, setUrl, imageData, setImageData,
+    inputType, setInputType, inputText, setInputText, urls, setUrls, imageData, setImageData,
     wordCount, setWordCount, onAnalyze, isLoading, isAnalyzeDisabled 
   } = props;
 
@@ -130,18 +184,7 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
           />
         )}
         {inputType === 'image' && <ImageUploader imageData={imageData} setImageData={setImageData} isLoading={isLoading}/>}
-        {inputType === 'url' && (
-            <div className="flex-grow flex items-center">
-                <input
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://example.com/article"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors duration-200"
-                    disabled={isLoading}
-                />
-            </div>
-        )}
+        {inputType === 'url' && <UrlInput urls={urls} setUrls={setUrls} isLoading={isLoading} />}
       </div>
 
       <div className="p-4 md:p-6 border-t border-slate-700/50 space-y-4">
@@ -169,7 +212,7 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
         >
             {isLoading ? (
             <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

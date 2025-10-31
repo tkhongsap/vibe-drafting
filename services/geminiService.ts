@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { GeneratedContent } from '../types';
+import type { GeneratedContent, ImageData } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -11,16 +11,16 @@ const schema = {
   properties: {
     summary: {
       type: Type.STRING,
-      description: 'A concise summary of the content.',
+      description: 'A concise summary of all the provided content, synthesized into a single cohesive overview.',
     },
     keyInsights: {
       type: Type.ARRAY,
-      description: '3-5 key insights or main takeaways from the content, as a list of strings.',
+      description: '3-5 key insights or main takeaways from the combined content, as a list of strings.',
       items: { type: Type.STRING },
     },
     interestingFacts: {
       type: Type.ARRAY,
-      description: '2-3 interesting or surprising facts from the content, as a list of strings.',
+      description: '2-3 interesting or surprising facts drawn from any of the provided content, as a list of strings.',
       items: { type: Type.STRING },
     },
   },
@@ -30,9 +30,8 @@ const schema = {
 interface AnalyzeParams {
     type: 'text' | 'image' | 'url';
     text?: string;
-    imageUrl?: string;
-    imageMimeType?: string;
-    url?: string;
+    images?: ImageData[];
+    urls?: string[];
     wordCount: number;
 }
 
@@ -43,9 +42,9 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
   const basePrompt = `
     Based on the provided content, generate a structured response.
     The response should include:
-    1. A concise summary of about ${params.wordCount} words.
-    2. 3-5 key insights or main takeaways.
-    3. 2-3 interesting or surprising facts.
+    1. A concise summary synthesizing all content of about ${params.wordCount} words.
+    2. 3-5 key insights or main takeaways from the combined content.
+    3. 2-3 interesting or surprising facts from across all content.
   `;
 
   switch (params.type) {
@@ -56,24 +55,26 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
       break;
     
     case 'image':
-      if (!params.imageUrl || !params.imageMimeType) {
+      if (!params.images || params.images.length === 0) {
         throw new Error("Image data is missing for image analysis.");
       }
       model = 'gemini-2.5-flash';
-      const imagePart = {
+      const imageParts = params.images.map(image => ({
         inlineData: {
-          mimeType: params.imageMimeType,
-          data: params.imageUrl,
+          mimeType: image.mimeType,
+          data: image.base64,
         },
-      };
-      const textPart = { text: `Analyze this image. ${basePrompt}` };
-      contents = { parts: [imagePart, textPart] };
+      }));
+      
+      const textPart = { text: `Analyze these images collectively. ${basePrompt}` };
+      contents = { parts: [...imageParts, textPart] };
       break;
 
     case 'url':
-      if (!params.url) throw new Error("URL is missing for URL analysis.");
+      if (!params.urls || params.urls.length === 0) throw new Error("URL is missing for URL analysis.");
       model = 'gemini-2.5-pro';
-      contents = `Please extract the main content from the following URL and then analyze it. URL: ${params.url}\n${basePrompt}`;
+      const urlList = params.urls.map(url => `- ${url}`).join('\n');
+      contents = `Please extract the main content from the following URLs and then analyze their combined information. URLs:\n${urlList}\n${basePrompt}`;
       break;
 
     default:
@@ -106,7 +107,7 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     if (error instanceof Error && error.message.includes('URL')) {
-        throw new Error("Failed to fetch content from the URL. It may be inaccessible or protected.");
+        throw new Error("Failed to fetch content from one or more URLs. They may be inaccessible or protected.");
     }
     throw new Error("Failed to get a valid response from the Gemini API.");
   }

@@ -16,8 +16,8 @@ export interface ImageData {
 const App: React.FC = () => {
   const [inputType, setInputType] = useState<InputType>('text');
   const [inputText, setInputText] = useState<string>('');
-  const [url, setUrl] = useState<string>('');
-  const [imageData, setImageData] = useState<ImageData | null>(null);
+  const [urls, setUrls] = useState<string[]>([]);
+  const [imageData, setImageData] = useState<ImageData[]>([]);
   const [wordCount, setWordCount] = useState<number>(150);
 
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
@@ -30,9 +30,9 @@ const App: React.FC = () => {
       case 'text':
         return !inputText.trim();
       case 'image':
-        return !imageData;
+        return imageData.length === 0;
       case 'url':
-        return !url.trim();
+        return urls.length === 0;
       default:
         return true;
     }
@@ -54,11 +54,11 @@ const App: React.FC = () => {
           result = await analyzeContent({ type: 'text', text: inputText, wordCount });
           break;
         case 'image':
-          if (!imageData) throw new Error("Image data not found.");
-          result = await analyzeContent({ type: 'image', imageUrl: imageData.base64, imageMimeType: imageData.mimeType, wordCount });
+          if (imageData.length === 0) throw new Error("Image data not found.");
+          result = await analyzeContent({ type: 'image', images: imageData, wordCount });
           break;
         case 'url':
-          result = await analyzeContent({ type: 'url', url: url, wordCount });
+          result = await analyzeContent({ type: 'url', urls: urls, wordCount });
           break;
         default:
           throw new Error("Invalid input type");
@@ -71,7 +71,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, inputType, imageData, url, wordCount]);
+  }, [inputText, inputType, imageData, urls, wordCount]);
 
   return (
     <div className="min-h-screen bg-slate-900 font-sans text-slate-300 flex flex-col">
@@ -83,8 +83,8 @@ const App: React.FC = () => {
               setInputType={setInputType}
               inputText={inputText}
               setInputText={setInputText}
-              url={url}
-              setUrl={setUrl}
+              urls={urls}
+              setUrls={setUrls}
               imageData={imageData}
               setImageData={setImageData}
               wordCount={wordCount}

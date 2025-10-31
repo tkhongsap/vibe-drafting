@@ -77,7 +77,7 @@ ${factsText}
   }, [formatForLinkedIn]);
   
   return (
-    <div className="flex flex-col h-full bg-slate-800/50 rounded-lg p-4 md:p-6 shadow-lg border border-slate-700/50 min-h-[400px] md:min-h-[calc(60vh+76px)]">
+    <div className="flex flex-col h-full bg-slate-800/50 rounded-lg p-4 md:p-6 shadow-lg border border-slate-700/50 min-h-[400px] md:min-h-[calc(50vh+150px)]">
       <div className="flex-grow">
         {isLoading && <OutputSkeleton />}
         {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-md">{error}</div>}

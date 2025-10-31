@@ -112,18 +112,43 @@ const ImageUploader: React.FC<{ imageData: ImageData[]; setImageData: (data: Ima
 
 const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; isLoading: boolean; }> = ({ urls, setUrls, isLoading }) => {
     const [currentUrl, setCurrentUrl] = useState('');
+    const [validationError, setValidationError] = useState<string | null>(null);
+    const [isValidating, setIsValidating] = useState(false);
 
-    const handleAddUrl = () => {
-        if (currentUrl.trim() && !urls.includes(currentUrl.trim())) {
-            try {
-                // Basic URL validation
-                new URL(currentUrl);
-                setUrls([...urls, currentUrl.trim()]);
-                setCurrentUrl('');
-            } catch (_) {
-                // Simple feedback for invalid URL, could be improved with a stateful error message
-                alert("Please enter a valid URL.");
-            }
+    const handleAddUrl = async () => {
+        const urlToAdd = currentUrl.trim();
+        if (!urlToAdd) return;
+
+        if (urls.some(url => url.toLowerCase() === urlToAdd.toLowerCase())) {
+            setValidationError('This URL has already been added.');
+            return;
+        }
+
+        setIsValidating(true);
+        setValidationError(null);
+
+        try {
+            // 1. Basic format check
+            new URL(urlToAdd);
+        } catch (_) {
+            setValidationError('Invalid URL format. Please enter a complete URL (e.g., https://example.com).');
+            setIsValidating(false);
+            return;
+        }
+
+        try {
+            // 2. Accessibility check (best effort due to CORS)
+            // 'no-cors' mode can detect network errors (like DNS failure)
+            // but won't reveal status codes for successful requests.
+            await fetch(urlToAdd, { method: 'HEAD', mode: 'no-cors' });
+            
+            setUrls([...urls, urlToAdd]);
+            setCurrentUrl('');
+        } catch (error) {
+            console.error('URL validation fetch error:', error);
+            setValidationError('URL seems to be inaccessible. Please check the address and your connection.');
+        } finally {
+            setIsValidating(false);
         }
     };
 
@@ -133,17 +158,45 @@ const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; is
 
     return (
         <div className="flex-grow flex flex-col">
-            <div className="flex gap-2 mb-4">
-                <input
-                    type="url"
-                    value={currentUrl}
-                    onChange={(e) => setCurrentUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddUrl()}
-                    placeholder="https://example.com/article"
-                    className="flex-grow w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors duration-200"
-                    disabled={isLoading}
-                />
-                <button onClick={handleAddUrl} disabled={isLoading || !currentUrl.trim()} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md disabled:opacity-50">Add</button>
+            <div className="mb-4">
+                <div className="flex gap-2">
+                    <input
+                        type="url"
+                        value={currentUrl}
+                        onChange={(e) => {
+                            setCurrentUrl(e.target.value);
+                            if (validationError) setValidationError(null);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !isValidating) {
+                                e.preventDefault();
+                                handleAddUrl();
+                            }
+                        }}
+                        placeholder="https://example.com/article"
+                        className="flex-grow w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors duration-200"
+                        disabled={isLoading || isValidating}
+                        aria-invalid={!!validationError}
+                        aria-describedby="url-error"
+                    />
+                    <button 
+                        onClick={handleAddUrl} 
+                        disabled={isLoading || isValidating || !currentUrl.trim()} 
+                        className="w-24 shrink-0 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md disabled:opacity-50 flex items-center justify-center transition-colors"
+                    >
+                        {isValidating ? (
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : (
+                            'Add'
+                        )}
+                    </button>
+                </div>
+                {validationError && (
+                    <p id="url-error" className="text-red-400 text-sm mt-2 px-1">{validationError}</p>
+                )}
             </div>
             <div className="flex-grow space-y-2 overflow-y-auto max-h-80 p-1">
                 {urls.map((url, index) => (
@@ -152,7 +205,9 @@ const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; is
                         <button onClick={() => handleRemoveUrl(index)} disabled={isLoading} className="text-red-500 hover:text-red-400 text-lg">&times;</button>
                     </div>
                 ))}
-                {urls.length === 0 && <p className="text-center text-slate-500 pt-8">Add URLs to analyze.</p>}
+                {urls.length === 0 && !validationError && (
+                    <p className="text-center text-slate-500 pt-8">Add URLs to analyze.</p>
+                )}
             </div>
         </div>
     );

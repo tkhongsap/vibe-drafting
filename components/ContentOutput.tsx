@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import type { GeneratedContent } from '../types';
 import { LinkedInIcon } from './icons/LinkedInIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
+import { TwitterIcon } from './icons/TwitterIcon';
 
 interface ContentOutputProps {
   content: GeneratedContent | null;
@@ -42,7 +43,7 @@ const Placeholder: React.FC = () => (
 
 
 export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading, error }) => {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'twitter'>('idle');
   
   const formatForLinkedIn = useCallback((): string => {
     if (!content) return '';
@@ -65,16 +66,47 @@ ${factsText}
     `.trim();
   }, [content]);
 
-  const handleShare = useCallback(() => {
+  const formatForTwitter = useCallback((): string => {
+    if (!content) return '';
+
+    const summaryPart = content.summary;
+    const insightsPart = content.keyInsights.map(insight => `• ${insight}`).join('\n');
+    
+    return `
+${summaryPart}
+
+Key Insights:
+${insightsPart}
+
+#ContentCreation #AI #Insights
+    `.trim();
+  }, [content]);
+
+  const handleShareOnLinkedIn = useCallback(() => {
     const linkedInText = formatForLinkedIn();
     navigator.clipboard.writeText(linkedInText).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 3000);
+        setCopyStatus('linkedin');
+        setTimeout(() => setCopyStatus('idle'), 3000);
         window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank', 'noopener,noreferrer');
     }).catch(err => {
         console.error('Failed to copy text: ', err);
     });
   }, [formatForLinkedIn]);
+
+  const handleShareOnTwitter = useCallback(() => {
+    const twitterText = formatForTwitter();
+    navigator.clipboard.writeText(twitterText).then(() => {
+      setCopyStatus('twitter');
+      setTimeout(() => setCopyStatus('idle'), 3000);
+      const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
+      window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    }).catch(err => {
+        console.error('Failed to copy text to clipboard: ', err);
+        // Fallback for clipboard failure: just open the window with pre-filled text
+        const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
+        window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }, [formatForTwitter]);
   
   return (
     <div className="flex flex-col h-full bg-slate-800/50 rounded-lg p-4 md:p-6 shadow-lg border border-slate-700/50 min-h-[400px] md:min-h-[calc(50vh+150px)]">
@@ -116,25 +148,43 @@ ${factsText}
 
       {content && (
         <div className="mt-6">
-          <button
-            onClick={handleShare}
-            className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-slate-900 bg-cyan-400 hover:bg-cyan-300 disabled:bg-slate-600 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-slate-900 transition-all duration-200"
-          >
-            {copied ? (
-              <>
-                <ClipboardIcon className="w-5 h-5 mr-2" />
-                Copied! Now PASTE on LinkedIn
-              </>
-            ) : (
-              <>
-                <LinkedInIcon className="w-5 h-5 mr-2" />
-                Copy & Share on LinkedIn
-              </>
-            )}
-          </button>
-          {copied && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                    onClick={handleShareOnLinkedIn}
+                    className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-slate-900 bg-cyan-400 hover:bg-cyan-300 disabled:bg-slate-600 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-slate-900 transition-all duration-200"
+                >
+                    {copyStatus === 'linkedin' ? (
+                    <>
+                        <ClipboardIcon className="w-5 h-5 mr-2" />
+                        Copied for LinkedIn!
+                    </>
+                    ) : (
+                    <>
+                        <LinkedInIcon className="w-5 h-5 mr-2" />
+                        Copy & Share on LinkedIn
+                    </>
+                    )}
+                </button>
+                <button
+                    onClick={handleShareOnTwitter}
+                    className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-900 transition-all duration-200"
+                >
+                    {copyStatus === 'twitter' ? (
+                    <>
+                        <ClipboardIcon className="w-5 h-5 mr-2" />
+                        Copied for Twitter!
+                    </>
+                    ) : (
+                    <>
+                        <TwitterIcon className="w-5 h-5 mr-2" />
+                        Copy & Share on Twitter
+                    </>
+                    )}
+                </button>
+            </div>
+          {copyStatus !== 'idle' && (
             <p className="text-center text-sm text-cyan-300 mt-3 animate-pulse">
-                Content copied. Just paste it into the new LinkedIn tab.
+                Content copied. Just paste it into the new {copyStatus === 'linkedin' ? 'LinkedIn' : 'Twitter'} tab.
             </p>
           )}
         </div>

@@ -9,3 +9,9 @@ export interface ImageData {
   mimeType: string;
   name: string;
 }
+
+export interface TrendTopic {
+  category: string;
+  title: string;
+  posts: string;
+}

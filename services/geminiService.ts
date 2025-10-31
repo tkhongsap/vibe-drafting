@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { GeneratedContent, ImageData } from '../types';
+import type { GeneratedContent, ImageData, TrendTopic } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -27,12 +27,75 @@ const schema = {
   required: ['summary', 'keyInsights', 'interestingFacts'],
 };
 
+const trendingTopicsSchema = {
+  type: Type.OBJECT,
+  properties: {
+    trends: {
+      type: Type.ARRAY,
+      description: 'A list of 5 current trending topics.',
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          category: {
+            type: Type.STRING,
+            description: 'The general category of the trend (e.g., "AI · Trending").'
+          },
+          title: {
+            type: Type.STRING,
+            description: 'The specific title of the trend (e.g., "#React19").'
+          },
+          posts: {
+            type: Type.STRING,
+            description: 'An estimated number of posts related to the trend (e.g., "50.2K posts").'
+          }
+        },
+        required: ['category', 'title', 'posts']
+      }
+    }
+  },
+  required: ['trends']
+};
+
 interface AnalyzeParams {
     type: 'text' | 'image' | 'url';
     text?: string;
     images?: ImageData[];
     urls?: string[];
     wordCount: number;
+}
+
+export async function getTrendingTopics(): Promise<TrendTopic[]> {
+  const model = 'gemini-2.5-flash';
+  const prompt = `
+    Generate a list of exactly 5 current and diverse trending topics suitable for a social media "What's happening" section.
+    Topics should cover technology, business, AI, and marketing.
+    For each topic, provide a category, a concise title (often a hashtag), and a realistic, estimated number of posts.
+    Follow the JSON schema exactly.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: trendingTopicsSchema,
+        temperature: 0.9,
+      },
+    });
+
+    const jsonText = response.text.trim();
+    const parsedJson = JSON.parse(jsonText);
+
+    if (parsedJson.trends && Array.isArray(parsedJson.trends)) {
+      return parsedJson.trends as TrendTopic[];
+    } else {
+      throw new Error("API response for trends is not in the expected format.");
+    }
+  } catch (error) {
+    console.error("Error fetching trending topics:", error);
+    throw new Error("Failed to fetch trending topics from the Gemini API.");
+  }
 }
 
 export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedContent> {

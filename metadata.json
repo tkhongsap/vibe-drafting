@@ -1,0 +1,5 @@
+{
+  "name": "Content Insight Generator",
+  "description": "A web app to summarize and extract key insights from your content, preparing it for sharing on social media platforms like LinkedIn.",
+  "requestFramePermissions": []
+}

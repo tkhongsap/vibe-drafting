@@ -74,10 +74,10 @@ const App: React.FC = () => {
   }, [inputText, inputType, imageData, urls, wordCount]);
 
   return (
-    <div className="min-h-screen bg-slate-900 font-sans text-slate-300 flex flex-col">
+    <div className="min-h-screen font-sans bg-gray-50 text-slate-800 flex flex-col">
       <Header />
-      <main className="flex-grow container mx-auto p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        <div className="w-full h-full">
+      <main className="flex-grow container max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row items-stretch gap-8">
+        <div className="w-full lg:w-1/2">
             <ContentInput 
               inputType={inputType}
               setInputType={setInputType}
@@ -94,7 +94,7 @@ const App: React.FC = () => {
               isAnalyzeDisabled={isAnalyzeDisabled()}
             />
         </div>
-        <div className="w-full h-full">
+        <div className="w-full lg:w-1/2">
             <ContentOutput 
               content={generatedContent}
               isLoading={isLoading}
@@ -102,7 +102,7 @@ const App: React.FC = () => {
             />
         </div>
       </main>
-      <footer className="text-center p-4 text-slate-500 text-sm">
+      <footer className="text-center p-4 text-slate-600 text-sm">
         <p>Powered by Google Gemini</p>
       </footer>
     </div>

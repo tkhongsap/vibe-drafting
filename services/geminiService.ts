@@ -58,7 +58,7 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
       if (!params.images || params.images.length === 0) {
         throw new Error("Image data is missing for image analysis.");
       }
-      model = 'gemini-2.5-flash';
+      model = 'gemini-flash-latest';
       const imageParts = params.images.map(image => ({
         inlineData: {
           mimeType: image.mimeType,

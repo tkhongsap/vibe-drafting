@@ -1,15 +1,14 @@
-
 import React from 'react';
 
 export const Header: React.FC = () => {
   return (
-    <header className="p-4 border-b border-slate-700/50">
+    <header className="p-4 border-b border-gray-200">
       <div className="container mx-auto text-center">
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900">
           Content Insight Generator
         </h1>
-        <p className="text-slate-400 mt-1">
-          Transform your drafts into share-worthy LinkedIn posts.
+        <p className="text-slate-600 mt-2">
+          Your AI sidekick for crafting viral content.
         </p>
       </div>
     </header>

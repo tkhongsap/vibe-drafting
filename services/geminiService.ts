@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { GeneratedContent, ImageData, TrendTopic } from '../types';
+import type { GeneratedContent, ImageData, TrendTopic, UrlContent } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -56,12 +56,53 @@ const trendingTopicsSchema = {
   required: ['trends']
 };
 
+const urlFetchSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: {
+            type: Type.STRING,
+            description: 'The title of the web page.'
+        },
+        content: {
+            type: Type.STRING,
+            description: 'The main textual content extracted from the web page, stripped of navigation, ads, and footers.'
+        }
+    },
+    required: ['title', 'content']
+};
+
 interface AnalyzeParams {
     type: 'text' | 'image' | 'url';
     text?: string;
     images?: ImageData[];
-    urls?: string[];
+    urls?: UrlContent[];
     wordCount: number;
+}
+
+export async function fetchUrlContent(url: string): Promise<{ title: string; content: string }> {
+    const model = 'gemini-2.5-pro';
+    const prompt = `Extract the title and the main article text from the following URL: ${url}. Please focus on the primary content and ignore boilerplate like headers, footers, and navigation menus.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: urlFetchSchema,
+            },
+        });
+        const jsonText = response.text.trim();
+        const parsedJson = JSON.parse(jsonText);
+        if (parsedJson.title && parsedJson.content) {
+            return parsedJson;
+        } else {
+            throw new Error("Invalid JSON structure from API.");
+        }
+    } catch (error) {
+        console.error(`Error fetching content for URL ${url}:`, error);
+        throw new Error(`Failed to fetch and parse content for the URL. It might be inaccessible.`);
+    }
 }
 
 export async function getTrendingTopics(): Promise<TrendTopic[]> {
@@ -136,7 +177,7 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
     case 'url':
       if (!params.urls || params.urls.length === 0) throw new Error("URL is missing for URL analysis.");
       model = 'gemini-2.5-pro';
-      const urlList = params.urls.map(url => `- ${url}`).join('\n');
+      const urlList = params.urls.map(u => `- ${u.url}`).join('\n');
       contents = `Please extract the main content from the following URLs and then analyze their combined information. URLs:\n${urlList}\n${basePrompt}`;
       break;
 

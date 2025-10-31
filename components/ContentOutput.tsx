@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import type { GeneratedContent } from '../types';
 import { LinkedInIcon } from './icons/LinkedInIcon';
-import { ClipboardIcon } from './icons/ClipboardIcon';
 import { TwitterIcon } from './icons/TwitterIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { BookmarkIcon } from './icons/BookmarkIcon';
+import { contentHistoryService } from '../services/contentHistoryService';
 
 interface ContentOutputProps {
   content: GeneratedContent | null;
@@ -40,7 +41,8 @@ const Placeholder: React.FC = () => (
 
 
 export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading, error }) => {
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'x' | 'general'>('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'x'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 
   const formatForLinkedIn = useCallback((): string => {
     if (!content) return '';
@@ -74,6 +76,13 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
     copyToClipboard(text, 'x');
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSave = () => {
+    if (!content) return;
+    contentHistoryService.saveContent(content);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 3000);
   };
 
   if (isLoading) return <OutputSkeleton />;
@@ -133,6 +142,10 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
                     <button onClick={handleShareOnX} className="flex items-center gap-2 hover:text-slate-300 transition-colors duration-200">
                         <TwitterIcon className="w-5 h-5" />
                         <span className="text-sm">{copyStatus === 'x' ? 'Copied!' : 'Share'}</span>
+                    </button>
+                    <button onClick={handleSave} className="flex items-center gap-2 hover:text-amber-400 transition-colors duration-200">
+                        <BookmarkIcon className="w-5 h-5" />
+                        <span className="text-sm">{saveStatus === 'saved' ? 'Saved!' : 'Save'}</span>
                     </button>
                 </div>
             </div>

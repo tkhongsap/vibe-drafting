@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { HomeIcon } from './icons/HomeIcon';
 import { HashtagIcon } from './icons/HashtagIcon';
 import { BellIcon } from './icons/BellIcon';
 import { UserIcon } from './icons/UserIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
-import type { User } from '../types';
+// FIX: Import 'View' type from the central types file.
+import type { User, View } from '../types';
+import { DocumentDuplicateIcon } from './icons/DocumentDuplicateIcon';
 
 interface LeftSidebarProps {
     user: User;
     onLogout: () => void;
+    // FIX: Changed type from string to the specific 'View' type for better type safety.
+    currentView: View;
+    // FIX: Changed callback signature to use 'View' type, resolving the mismatch with the parent's state setter.
+    setView: (view: View) => void;
 }
 
 const NavItem: React.FC<{ children: React.ReactNode; active?: boolean; onClick: () => void; }> = ({ children, active, onClick }) => (
@@ -18,15 +24,16 @@ const NavItem: React.FC<{ children: React.ReactNode; active?: boolean; onClick: 
     </button>
 );
 
+// FIX: Added 'as const' to have TypeScript infer the narrowest possible types for keys, making them compatible with the 'View' type.
 const navItemsList = [
-    { name: 'Home', icon: <HomeIcon className="w-7 h-7" /> },
-    { name: 'Explore', icon: <HashtagIcon className="w-7 h-7" /> },
-    { name: 'Notifications', icon: <BellIcon className="w-7 h-7" /> },
-    { name: 'Profile', icon: <UserIcon className="w-7 h-7" /> },
-];
+    { name: 'Home', key: 'home', icon: <HomeIcon className="w-7 h-7" /> },
+    { name: 'Explore', key: 'explore', icon: <HashtagIcon className="w-7 h-7" /> },
+    { name: 'Notifications', key: 'notifications', icon: <BellIcon className="w-7 h-7" /> },
+    { name: 'History', key: 'history', icon: <DocumentDuplicateIcon className="w-7 h-7" /> },
+    { name: 'Profile', key: 'profile', icon: <UserIcon className="w-7 h-7" /> },
+] as const;
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ user, onLogout }) => {
-    const [activeItem, setActiveItem] = useState('Home');
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ user, onLogout, currentView, setView }) => {
 
     return (
         <aside className="w-[275px] h-screen sticky top-0 px-2 py-1 flex-col justify-between hidden sm:flex">
@@ -38,8 +45,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ user, onLogout }) => {
                     {navItemsList.map((item) => (
                         <NavItem
                             key={item.name}
-                            active={activeItem === item.name}
-                            onClick={() => setActiveItem(item.name)}
+                            active={currentView === item.key}
+                            onClick={() => setView(item.key)}
                         >
                             {item.icon}
                             <span className="text-xl">{item.name}</span>

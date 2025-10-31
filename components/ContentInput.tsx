@@ -1,10 +1,14 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import type { InputType } from '../App';
-import type { ImageData, User } from '../types';
+import type { ImageData, User, UrlContent } from '../types';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { LinkIcon } from './icons/LinkIcon';
+import { fetchUrlContent } from '../services/geminiService';
+import { ArrowPathIcon } from './icons/ArrowPathIcon';
+import { CheckCircleIcon } from './icons/CheckCircleIcon';
+import { XCircleIcon } from './icons/XCircleIcon';
 
 interface ContentInputProps {
   user: User;
@@ -12,8 +16,9 @@ interface ContentInputProps {
   setInputType: (type: InputType) => void;
   inputText: string;
   setInputText: (text: string) => void;
-  urls: string[];
-  setUrls: (urls: string[]) => void;
+  urls: UrlContent[];
+  // FIX: Updated the type for setUrls to correctly handle state updates with a function, resolving type errors.
+  setUrls: React.Dispatch<React.SetStateAction<UrlContent[]>>;
   imageData: ImageData[];
   setImageData: React.Dispatch<React.SetStateAction<ImageData[]>>;
   wordCount: number;
@@ -103,18 +108,69 @@ const ImageUploader: React.FC<{ imageData: ImageData[]; setImageData: React.Disp
     );
 };
 
-const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; isLoading: boolean; }> = ({ urls, setUrls, isLoading }) => {
+const UrlItem: React.FC<{ item: UrlContent; onRemove: () => void; isLoading: boolean; }> = ({ item, onRemove, isLoading }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+        <div className="bg-slate-800 p-2 rounded-lg transition-all duration-300">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                    {item.status === 'loading' && <ArrowPathIcon className="w-4 h-4 text-slate-500 animate-spin flex-shrink-0" />}
+                    {item.status === 'success' && <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />}
+                    {item.status === 'error' && <XCircleIcon className="w-4 h-4 text-red-500 flex-shrink-0" />}
+                    <span className="text-slate-300 text-sm truncate">{item.title || item.url}</span>
+                </div>
+                <button onClick={onRemove} disabled={isLoading} className="text-red-500 hover:text-red-400 text-lg flex-shrink-0 ml-2">&times;</button>
+            </div>
+            {item.status === 'success' && item.content && (
+                <div className="mt-2">
+                    <button onClick={() => setIsExpanded(!isExpanded)} className="text-blue-500 hover:underline text-xs">
+                        {isExpanded ? 'Hide' : 'Show'} fetched content
+                    </button>
+                    {isExpanded && (
+                        <div className="mt-1 p-2 bg-slate-900/50 rounded text-xs text-slate-400 max-h-32 overflow-y-auto border border-slate-700">
+                            <p className="whitespace-pre-wrap">{item.content}</p>
+                        </div>
+                    )}
+                </div>
+            )}
+            {item.status === 'error' && (
+                <p className="text-red-400 text-xs mt-1 px-1">{item.content || 'Failed to fetch content.'}</p>
+            )}
+        </div>
+    );
+};
+
+// FIX: Updated the type for the setUrls prop to resolve type errors when using a functional update for state.
+const UrlInput: React.FC<{ urls: UrlContent[]; setUrls: React.Dispatch<React.SetStateAction<UrlContent[]>>; isLoading: boolean; }> = ({ urls, setUrls, isLoading }) => {
     const [currentUrl, setCurrentUrl] = useState('');
 
-    const handleAddUrl = () => {
+    const handleAddUrl = async () => {
         const urlToAdd = currentUrl.trim();
-        if (!urlToAdd) return;
-        setUrls([...urls, urlToAdd]);
+        if (!urlToAdd || urls.some(u => u.url === urlToAdd)) {
+            setCurrentUrl('');
+            return;
+        }
+
+        const newUrlEntry: UrlContent = { url: urlToAdd, status: 'loading' };
+        setUrls([...urls, newUrlEntry]);
         setCurrentUrl('');
+
+        try {
+            const { title, content } = await fetchUrlContent(urlToAdd);
+            setUrls(prevUrls => prevUrls.map(u => 
+                u.url === urlToAdd ? { ...u, status: 'success', title, content } : u
+            ));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to fetch content.';
+            setUrls(prevUrls => prevUrls.map(u => 
+                u.url === urlToAdd ? { ...u, status: 'error', content: errorMessage } : u
+            ));
+        }
     };
 
-    const handleRemoveUrl = (index: number) => {
-        setUrls(urls.filter((_, i) => i !== index));
+    const handleRemoveUrl = (urlToRemove: string) => {
+        setUrls(urls.filter((u) => u.url !== urlToRemove));
     };
 
     return (
@@ -140,11 +196,8 @@ const UrlInput: React.FC<{ urls: string[]; setUrls: (urls: string[]) => void; is
                 </div>
             </div>
             <div className="flex-grow space-y-2 overflow-y-auto max-h-60 p-1">
-                {urls.map((url, index) => (
-                    <div key={index} className="flex items-center justify-between bg-slate-800 p-2 rounded-lg">
-                        <span className="text-slate-400 text-sm truncate pr-2">{url}</span>
-                        <button onClick={() => handleRemoveUrl(index)} disabled={isLoading} className="text-red-500 hover:text-red-400 text-lg">&times;</button>
-                    </div>
+                {urls.map((item) => (
+                   <UrlItem key={item.url} item={item} onRemove={() => handleRemoveUrl(item.url)} isLoading={isLoading} />
                 ))}
             </div>
         </div>

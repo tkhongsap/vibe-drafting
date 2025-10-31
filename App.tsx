@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { Header } from './components/Header';
 import { ContentInput } from './components/ContentInput';
 import { ContentOutput } from './components/ContentOutput';
 import { analyzeContent } from './services/geminiService';
 import type { GeneratedContent } from './types';
+import { LeftSidebar } from './components/LeftSidebar';
+import { RightSidebar } from './components/RightSidebar';
 
 export type InputType = 'text' | 'image' | 'url';
 
@@ -74,37 +75,42 @@ const App: React.FC = () => {
   }, [inputText, inputType, imageData, urls, wordCount]);
 
   return (
-    <div className="min-h-screen font-sans bg-gray-50 text-slate-800 flex flex-col">
-      <Header />
-      <main className="flex-grow container max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row items-stretch gap-8">
-        <div className="w-full lg:w-1/2">
-            <ContentInput 
-              inputType={inputType}
-              setInputType={setInputType}
-              inputText={inputText}
-              setInputText={setInputText}
-              urls={urls}
-              setUrls={setUrls}
-              imageData={imageData}
-              setImageData={setImageData}
-              wordCount={wordCount}
-              setWordCount={setWordCount}
-              onAnalyze={handleAnalyze}
-              isLoading={isLoading}
-              isAnalyzeDisabled={isAnalyzeDisabled()}
-            />
+    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex justify-center">
+      <div className="w-full max-w-7xl flex">
+        <LeftSidebar />
+        <div className="flex-grow flex-shrink-0 w-full max-w-[600px] border-x border-slate-700">
+            <header className="sticky top-0 z-10 p-4 border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
+                <h1 className="text-xl font-bold">Home</h1>
+            </header>
+            <main>
+                <div className="p-4 border-b border-slate-700">
+                    <ContentInput 
+                      inputType={inputType}
+                      setInputType={setInputType}
+                      inputText={inputText}
+                      setInputText={setInputText}
+                      urls={urls}
+                      setUrls={setUrls}
+                      imageData={imageData}
+                      setImageData={setImageData}
+                      wordCount={wordCount}
+                      setWordCount={setWordCount}
+                      onAnalyze={handleAnalyze}
+                      isLoading={isLoading}
+                      isAnalyzeDisabled={isAnalyzeDisabled()}
+                    />
+                </div>
+                <div className="min-h-[50vh]">
+                    <ContentOutput 
+                      content={generatedContent}
+                      isLoading={isLoading}
+                      error={error}
+                    />
+                </div>
+            </main>
         </div>
-        <div className="w-full lg:w-1/2">
-            <ContentOutput 
-              content={generatedContent}
-              isLoading={isLoading}
-              error={error}
-            />
-        </div>
-      </main>
-      <footer className="text-center p-4 text-slate-600 text-sm">
-        <p>Powered by Google Gemini</p>
-      </footer>
+        <RightSidebar />
+      </div>
     </div>
   );
 };

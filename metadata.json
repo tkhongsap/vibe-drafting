@@ -1,5 +1,5 @@
 {
-  "name": "Content Insight Generator",
+  "name": "Content Studio",
   "description": "A web app to summarize and extract key insights from your content, preparing it for sharing on social media platforms like LinkedIn.",
   "requestFramePermissions": []
 }

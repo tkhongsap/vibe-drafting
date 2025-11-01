@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { GeneratedContent, ImageData, TrendTopic, UrlContent, Tone, Style } from '../types';
 
@@ -202,10 +203,10 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
         - The tone must be **'${tone}'**.
         - **Length:** Determine the optimal length based on the platform. LinkedIn posts can be longer and more detailed, while Twitter posts must be concise.
     2.  **Specific Style Guidelines:**
-        - If the style is **'LinkedIn Post'**: Write in a professional, engaging manner. Use whitespace, emojis, or bullet points to improve readability. End with a question or a call-to-action to encourage comments.
-        - If the style is **'Twitter Post'**: Keep it short, punchy, and well under the character limit. Use hashtags effectively.
-        - If the style is **'Twitter Thread'**: Create a series of connected, numbered tweets (e.g., 1/n). Start with a strong hook and end with a summary or call-to-action. Format the entire thread as a single string, with each tweet separated by "\\n\\n---\\n\\n".
-        - If the style is **'Article Summary'**: Provide a comprehensive summary suitable for a blog post or newsletter.
+        - If the style is **'LinkedIn'**: Write in a professional, engaging manner. Use whitespace, emojis, or bullet points to improve readability. End with a question or a call-to-action to encourage comments.
+        - If the style is **'Twitter'**: Keep it short, punchy, and well under the character limit. Use hashtags effectively.
+        - If the style is **'Thread'**: Create a series of connected, numbered tweets (e.g., 1/n). Start with a strong hook and end with a summary or call-to-action. Format the entire thread as a single string, with each tweet separated by "\\n\\n---\\n\\n".
+        - If the style is **'IG'**: Craft an engaging and visually-driven caption for an Instagram post. Use relevant emojis, and place most hashtags at the end for a clean look.
     3.  **Output:** Based on all the provided content, generate the following in the required JSON format:
         - **summary:** The main content, formatted according to the instructions above.
         - **keyInsights:** 3-5 key insights or main takeaways from the combined content.

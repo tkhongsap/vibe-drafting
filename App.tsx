@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { ContentInput } from './components/ContentInput';
 import { ContentOutput } from './components/ContentOutput';
@@ -29,7 +30,7 @@ const App: React.FC = () => {
   const [urls, setUrls] = useState<UrlContent[]>([]);
   const [imageData, setImageData] = useState<ImageData[]>([]);
   const [tone, setTone] = useState<Tone>('Professional');
-  const [style, setStyle] = useState<Style>('LinkedIn Post');
+  const [style, setStyle] = useState<Style>('LinkedIn');
 
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);

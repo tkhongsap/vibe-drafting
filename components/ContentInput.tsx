@@ -1,3 +1,4 @@
+
 import React, { useCallback, useState, useEffect } from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import type { InputType } from '../App';
@@ -222,7 +223,7 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
   ];
 
   const toneOptions: Tone[] = ['Professional', 'Casual', 'Witty', 'Informative', 'Inspirational'];
-  const styleOptions: Style[] = ['LinkedIn Post', 'Twitter Post', 'Twitter Thread', 'Article Summary'];
+  const styleOptions: Style[] = ['LinkedIn', 'Twitter', 'Thread', 'IG'];
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;

@@ -2,9 +2,15 @@ import express from 'express';
 import { load } from 'cheerio';
 import { setupAuth, isAuthenticated } from './server/replitAuth.js';
 import { storage } from './server/storage.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(express.json());
 
@@ -209,8 +215,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'content-studio-backend' });
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Backend server running on http://127.0.0.1:${PORT}`);
-  console.log(`Health check: http://127.0.0.1:${PORT}/health`);
+if (isProduction) {
+  app.use(express.static(path.join(__dirname, 'dist')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  });
+}
+
+const host = isProduction ? '0.0.0.0' : '127.0.0.1';
+app.listen(PORT, host, () => {
+  console.log(`Backend server running on http://${host}:${PORT}`);
+  console.log(`Environment: ${isProduction ? 'production' : 'development'}`);
+  console.log(`Health check: http://${host}:${PORT}/health`);
   console.log(`Authentication endpoints ready: /api/login, /api/logout, /api/callback`);
+  if (isProduction) {
+    console.log(`Serving static files from dist/`);
+  }
 });

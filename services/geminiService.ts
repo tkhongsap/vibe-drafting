@@ -96,11 +96,11 @@ interface AnalyzeParams {
 async function generateHashtags(summary: string, keyInsights: string[]): Promise<string[]> {
   const model = 'gemini-2.5-flash';
   const contentToAnalyze = `Summary: ${summary}\nKey Insights: ${keyInsights.join('\n- ')}`;
-  const prompt = `Based on the following content, generate 3-5 highly relevant and popular social media hashtags. The hashtags should be concise, lowercase, and directly related to the main topics.
+  const prompt = `Based on the following content, generate 3-5 highly relevant and popular social media hashtags. The hashtags should be concise, lowercase, and directly related to the main topics. Each hashtag MUST start with the # symbol.
   
   Content:\n---\n${contentToAnalyze}\n---\n
   
-  Return the hashtags in the specified JSON format.`;
+  Return the hashtags in the specified JSON format. Example: ["#ai", "#technology", "#innovation"]`;
 
   try {
     const response = await ai.models.generateContent({
@@ -117,7 +117,9 @@ async function generateHashtags(summary: string, keyInsights: string[]): Promise
     const parsedJson = JSON.parse(jsonText);
     
     if (parsedJson.hashtags && Array.isArray(parsedJson.hashtags)) {
-      return parsedJson.hashtags as string[];
+      return parsedJson.hashtags.map((tag: string) => 
+        tag.startsWith('#') ? tag : `#${tag}`
+      );
     } else {
       console.warn("Hashtag generation response was not in the expected format.");
       return [];

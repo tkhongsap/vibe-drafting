@@ -83,3 +83,7 @@ None specified yet.
 - Tailwind CSS is loaded via CDN (not recommended for production)
 - Content history is stored in localStorage
 - For production use, consider installing Tailwind CSS properly and implementing real authentication
+
+## Known Limitations
+- **URL Content Extraction**: The current implementation asks Gemini AI to analyze URLs, but Gemini cannot actually fetch web page content. This means the feature may not work reliably for extracting real content from URLs. For production, consider implementing server-side URL fetching with a library like `node-fetch` or Puppeteer to retrieve actual page content before sending it to Gemini for analysis.
+- **Vite allowedHosts**: Set to `true` for development to work with Replit's proxy. This is safe for development but should be restricted in production builds.

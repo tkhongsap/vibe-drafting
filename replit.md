@@ -13,6 +13,14 @@ Content Studio is an AI-powered web application that helps users analyze content
 ## Recent Changes
 *Last Updated: November 1, 2025*
 
+### Production Deployment Fix (Latest)
+- **Fixed "Cannot GET /" error** in production deployment
+- **Unified server architecture**: Express now serves both API and static files in production
+- **Production mode detection**: Uses NODE_ENV environment variable
+- **Proper external access**: Server binds to 0.0.0.0 in production (127.0.0.1 in development)
+- **Deployment configuration**: Single command runs Express server on port 5000
+- **Tested and verified**: Production mode successfully serves static files and API routes
+
 ### Replit Authentication Integration (Latest)
 - **Replaced mock authentication** with real Replit Auth supporting Google, GitHub, Twitter (X), Apple, and email/password login
 - **Created PostgreSQL database** with users and sessions tables for account management
@@ -117,9 +125,17 @@ The app uses **Replit Auth**, a production-ready authentication system that supp
 ### Deployment
 The app is configured for Replit's VM deployment:
 - **Build Command**: `npm run build`
-- **Run Command**: `node server.js & npx vite preview --host 0.0.0.0 --port 5000`
+- **Run Command**: `NODE_ENV=production PORT=5000 node server.js`
 - **Deployment Type**: VM (required for stateful authentication with sessions and database)
+- **Production Mode**: Express serves both API routes and static frontend files from dist/
 - **Database**: Automatically migrated to production on deployment
+
+**Production Architecture:**
+In production, the Express server handles everything on port 5000:
+- Static files served from `dist/` folder
+- API routes under `/api/*` prefix
+- Authentication endpoints
+- Catch-all route for client-side routing (serves index.html)
 
 ## User Preferences
 None specified yet.

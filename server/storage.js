@@ -1,29 +1,17 @@
-import {
-  users,
-  type User,
-  type UpsertUser,
-} from "../shared/schema";
-import { db } from "./db";
+import { users } from "../shared/schema.js";
+import { db } from "./db.js";
 import { eq } from "drizzle-orm";
 
-// Interface for storage operations
-export interface IStorage {
-  // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-}
-
-export class DatabaseStorage implements IStorage {
+export class DatabaseStorage {
   // User operations
   // (IMPORTANT) these user operations are mandatory for Replit Auth.
 
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id) {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async upsertUser(userData) {
     const [user] = await db
       .insert(users)
       .values(userData)

@@ -20,6 +20,7 @@ Content Studio is an AI-powered web application that helps users analyze content
 - **Updated frontend** with useAuth hook and real user session management
 - **All components updated** to use real user data (firstName, lastName, email, profileImageUrl)
 - **Authentication endpoints ready**: `/api/login`, `/api/logout`, `/api/callback`, `/api/auth/user`
+- **TypeScript/JavaScript interoperability**: Split schema into `schema.js` (runtime) and `schema.d.ts` (types) to support both Node.js backend and React frontend
 
 ### Backend Server & Security
 - Created Express.js backend for URL content fetching and authentication
@@ -70,7 +71,8 @@ Content Studio is an AI-powered web application that helps users analyze content
 │   ├── replitAuth.js   # Authentication setup
 │   └── storage.js      # Database operations
 ├── shared/             # Shared code
-│   └── schema.js       # Database schema (Drizzle)
+│   ├── schema.js       # Database schema (Drizzle runtime)
+│   └── schema.d.ts     # TypeScript type definitions
 ├── App.tsx             # Main application component
 ├── index.tsx           # Application entry point
 ├── server.js           # Express backend server
@@ -132,7 +134,8 @@ None specified yet.
 ## Notes
 - Tailwind CSS is loaded via CDN (not recommended for production - consider installing properly)
 - Content history is currently stored in localStorage (should be migrated to database per-user)
-- Backend files in `server/` and `shared/` are JavaScript (converted from TypeScript for Node.js compatibility)
+- Backend files in `server/` are JavaScript for Node.js compatibility
+- Database schema uses split approach: `schema.js` for runtime (Node.js imports) and `schema.d.ts` for TypeScript types (React imports)
 
 ## Backend Server
 The application now includes a Node.js/Express backend server (`server.js`) that:

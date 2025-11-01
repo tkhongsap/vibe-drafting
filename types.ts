@@ -5,6 +5,7 @@ export interface GeneratedContent {
   summary: string;
   keyInsights: string[];
   interestingFacts: string[];
+  hashtags: string[];
 }
 
 export interface SavedContent extends GeneratedContent {

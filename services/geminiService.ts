@@ -71,12 +71,60 @@ const urlFetchSchema = {
     required: ['title', 'content']
 };
 
+const hashtagsSchema = {
+  type: Type.OBJECT,
+  properties: {
+    hashtags: {
+      type: Type.ARRAY,
+      description: 'A list of 3-5 relevant social media hashtags as strings, each starting with a #.',
+      items: { type: Type.STRING },
+    },
+  },
+  required: ['hashtags'],
+};
+
 interface AnalyzeParams {
     type: 'text' | 'image' | 'url';
     text?: string;
     images?: ImageData[];
     urls?: UrlContent[];
     wordCount: number;
+}
+
+async function generateHashtags(summary: string, keyInsights: string[]): Promise<string[]> {
+  const model = 'gemini-2.5-flash';
+  const contentToAnalyze = `Summary: ${summary}\nKey Insights: ${keyInsights.join('\n- ')}`;
+  const prompt = `Based on the following content, generate 3-5 highly relevant and popular social media hashtags. The hashtags should be concise, lowercase, and directly related to the main topics.
+  
+  Content:\n---\n${contentToAnalyze}\n---\n
+  
+  Return the hashtags in the specified JSON format.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: hashtagsSchema,
+        temperature: 0.5,
+      },
+    });
+
+    const jsonText = response.text.trim();
+    const parsedJson = JSON.parse(jsonText);
+    
+    if (parsedJson.hashtags && Array.isArray(parsedJson.hashtags)) {
+      return parsedJson.hashtags as string[];
+    } else {
+      console.warn("Hashtag generation response was not in the expected format.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error generating hashtags:", error);
+    // Return empty array to not break the main flow
+    return [];
+  }
 }
 
 export async function fetchUrlContent(url: string): Promise<{ title: string; content: string }> {
@@ -204,7 +252,11 @@ export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedCo
         Array.isArray(parsedJson.keyInsights) &&
         Array.isArray(parsedJson.interestingFacts)
     ) {
-        return parsedJson as GeneratedContent;
+        const hashtags = await generateHashtags(parsedJson.summary, parsedJson.keyInsights);
+        return {
+            ...parsedJson,
+            hashtags,
+        } as GeneratedContent;
     } else {
         throw new Error("API response does not match the expected format.");
     }

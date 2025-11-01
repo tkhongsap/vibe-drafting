@@ -8,12 +8,24 @@
     "dev:backend": "node server.js",
     "dev:all": "node server.js & vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@google/genai": "^1.28.0",
+    "@types/express-session": "^1.18.2",
+    "@types/memoizee": "^0.4.12",
+    "@types/passport": "^1.0.17",
     "cheerio": "^1.1.2",
+    "connect-pg-simple": "^10.0.0",
+    "drizzle-kit": "^0.31.6",
+    "drizzle-orm": "^0.44.7",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "memoizee": "^0.4.17",
+    "openid-client": "^6.8.1",
+    "passport": "^0.7.0",
+    "postgres": "^3.4.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

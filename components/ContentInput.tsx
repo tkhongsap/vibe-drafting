@@ -2,7 +2,8 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import type { InputType } from '../App';
-import type { ImageData, User, UrlContent, Tone, Style } from '../types';
+import type { ImageData, UrlContent, Tone, Style } from '../types';
+import type { User } from '../shared/schema';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { LinkIcon } from './icons/LinkIcon';
@@ -263,11 +264,11 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
   return (
     <div className="flex gap-4">
       <div className="w-12 h-12 rounded-full flex-shrink-0" aria-label="User avatar">
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+        {user.profileImageUrl ? (
+          <img src={user.profileImageUrl} alt={user.firstName || user.email || 'User'} className="w-full h-full rounded-full object-cover" />
         ) : (
           <div className="w-full h-full rounded-full bg-slate-700 flex items-center justify-center font-bold text-lg">
-            {user.name.charAt(0)}
+            {(user.firstName || user.email || 'U').charAt(0).toUpperCase()}
           </div>
         )}
       </div>

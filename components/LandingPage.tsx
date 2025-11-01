@@ -1,26 +1,10 @@
-import React, { useState } from 'react';
-import type { User } from '../types';
-import { authService } from '../services/authService';
+import React from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { GoogleIcon } from './icons/GoogleIcon';
 
-interface LandingPageProps {
-  onLoginSuccess: (user: User) => void;
-}
-
-export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      const user = await authService.signIn();
-      onLoginSuccess(user);
-    } catch (error) {
-      console.error("Sign in failed", error);
-      // In a real app, you might want to show an error message to the user
-      setIsLoading(false);
-    }
+export const LandingPage: React.FC = () => {
+  const handleSignIn = () => {
+    window.location.href = '/api/login';
   };
 
   return (
@@ -33,14 +17,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
         <p className="mt-4 text-lg sm:text-xl text-slate-400">
           Your AI-powered assistant to summarize, analyze, and generate engaging social media posts from any content.
         </p>
+        <p className="mt-2 text-md text-slate-500">
+          Sign in with Google, GitHub, Twitter, Apple, or email to get started
+        </p>
         <div className="mt-10">
           <button
             onClick={handleSignIn}
-            disabled={isLoading}
-            className="inline-flex items-center justify-center gap-3 bg-white text-slate-800 font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 disabled:opacity-70"
+            className="inline-flex items-center justify-center gap-3 bg-white text-slate-800 font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 hover:bg-slate-100"
           >
             <GoogleIcon className="w-6 h-6" />
-            <span>{isLoading ? 'Signing in...' : 'Sign in with Google'}</span>
+            <span>Sign in</span>
           </button>
         </div>
       </div>

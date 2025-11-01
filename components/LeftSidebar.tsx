@@ -5,8 +5,8 @@ import { BellIcon } from './icons/BellIcon';
 import { UserIcon } from './icons/UserIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
-// FIX: Import 'View' type from the central types file.
-import type { User, View } from '../types';
+import type { View } from '../types';
+import type { User } from '../shared/schema';
 import { DocumentDuplicateIcon } from './icons/DocumentDuplicateIcon';
 
 interface LeftSidebarProps {
@@ -64,17 +64,19 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ user, onLogout, curren
             <div className="py-4">
                  <button className="flex items-center gap-3 p-3 rounded-full w-full hover:bg-slate-800">
                     <div className="w-10 h-10 rounded-full flex-shrink-0" aria-label="User avatar">
-                        {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                        {user.profileImageUrl ? (
+                          <img src={user.profileImageUrl} alt={user.firstName || user.email || 'User'} className="w-full h-full rounded-full object-cover" />
                         ) : (
                           <div className="w-full h-full rounded-full bg-slate-700 flex items-center justify-center font-bold text-lg">
-                            {user.name.charAt(0)}
+                            {(user.firstName || user.email || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                     </div>
                     <div className="text-left leading-tight">
-                        <p className="font-bold text-slate-200">{user.name}</p>
-                        <p className="text-sm text-slate-500">{user.handle}</p>
+                        <p className="font-bold text-slate-200">
+                          {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.email || 'User'}
+                        </p>
+                        <p className="text-sm text-slate-500">{user.email || ''}</p>
                     </div>
                 </button>
             </div>

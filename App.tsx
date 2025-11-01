@@ -1,19 +1,17 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ContentInput } from './components/ContentInput';
 import { ContentOutput } from './components/ContentOutput';
 import { analyzeContent } from './services/geminiService';
-// FIX: Import 'View' type from the central types file.
-import type { GeneratedContent, User, View, UrlContent, Tone, Style } from './types';
+import type { GeneratedContent, View, UrlContent, Tone, Style } from './types';
+import type { User } from './shared/schema';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
 import { LandingPage } from './components/LandingPage';
-import { authService } from './services/authService';
 import { HistoryView } from './components/HistoryView';
+import { useAuth } from './hooks/useAuth';
 
 export type InputType = 'text' | 'image' | 'url';
-// FIX: Removed 'View' type definition to avoid circular dependencies and centralize types. It is now defined in types.ts.
-
 
 export interface ImageData {
   base64: string;
@@ -22,7 +20,7 @@ export interface ImageData {
 }
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const [currentView, setCurrentView] = useState<View>('home');
 
   const [inputType, setInputType] = useState<InputType>('text');
@@ -36,20 +34,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const user = authService.getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
-    }
-  }, []);
-
-  const handleLoginSuccess = (user: User) => {
-    setCurrentUser(user);
-  };
-
-  const handleLogout = async () => {
-    await authService.signOut();
-    setCurrentUser(null);
+  const handleLogout = () => {
+    window.location.href = '/api/logout';
   };
 
   const isAnalyzeDisabled = () => {
@@ -103,15 +89,26 @@ const App: React.FC = () => {
     }
   }, [inputText, inputType, imageData, urls, tone, style]);
 
-  if (!currentUser) {
-    return <LandingPage onLoginSuccess={handleLoginSuccess} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return <LandingPage />;
   }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex justify-center">
       <div className="w-full max-w-7xl flex">
         <LeftSidebar 
-            user={currentUser} 
+            user={user} 
             onLogout={handleLogout}
             currentView={currentView}
             setView={setCurrentView}
@@ -125,7 +122,7 @@ const App: React.FC = () => {
                     <>
                         <div className="p-4 border-b border-slate-700">
                             <ContentInput
-                              user={currentUser}
+                              user={user}
                               inputType={inputType}
                               setInputType={setInputType}
                               inputText={inputText}

@@ -1,5 +1,7 @@
 import express from 'express';
 import { load } from 'cheerio';
+import { setupAuth, isAuthenticated } from './server/replitAuth.js';
+import { storage } from './server/storage.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,17 +17,21 @@ app.use((req, res, next) => {
   
   if (allowedOrigins.includes('*')) {
     res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
   } else if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
   }
   
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Cookie');
   res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
   next();
 });
+
+await setupAuth(app);
 
 function isPrivateIP(hostname) {
   const privateRanges = [
@@ -188,6 +194,17 @@ app.post('/api/fetch-url', async (req, res) => {
   }
 });
 
+app.get('/api/auth/user', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const user = await storage.getUser(userId);
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Failed to fetch user" });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'content-studio-backend' });
 });
@@ -195,4 +212,5 @@ app.get('/health', (req, res) => {
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`Backend server running on http://127.0.0.1:${PORT}`);
   console.log(`Health check: http://127.0.0.1:${PORT}/health`);
+  console.log(`Authentication endpoints ready: /api/login, /api/logout, /api/callback`);
 });

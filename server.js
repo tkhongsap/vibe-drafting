@@ -7,14 +7,69 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [process.env.REPLIT_DEV_DOMAIN, process.env.REPL_SLUG && `${process.env.REPL_SLUG}.repl.co`].filter(Boolean)
+    : ['*'];
+  
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes('*')) {
+    res.header('Access-Control-Allow-Origin', '*');
+  } else if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Headers', 'Content-Type');
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
   next();
 });
+
+function isPrivateIP(hostname) {
+  const privateRanges = [
+    /^127\./,
+    /^10\./,
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+    /^192\.168\./,
+    /^169\.254\./,
+    /^::1$/,
+    /^fe80:/,
+    /^fc00:/,
+    /^fd00:/,
+    /^localhost$/i
+  ];
+  
+  return privateRanges.some(range => range.test(hostname));
+}
+
+function validateUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return { valid: false, error: 'Only HTTP and HTTPS protocols are allowed' };
+    }
+    
+    if (url.port && !['80', '443', ''].includes(url.port)) {
+      return { valid: false, error: 'Only standard HTTP/HTTPS ports are allowed' };
+    }
+    
+    if (isPrivateIP(url.hostname)) {
+      return { valid: false, error: 'Cannot fetch from private or local addresses' };
+    }
+    
+    const suspiciousPatterns = ['file://', 'data:', 'javascript:'];
+    if (suspiciousPatterns.some(pattern => urlString.toLowerCase().includes(pattern))) {
+      return { valid: false, error: 'Invalid URL scheme detected' };
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+}
 
 function extractMainContent(html, url) {
   const $ = load(html);
@@ -80,14 +135,10 @@ app.post('/api/fetch-url', async (req, res) => {
     });
   }
   
-  try {
-    const urlObj = new URL(url);
-    if (!['http:', 'https:'].includes(urlObj.protocol)) {
-      throw new Error('Only HTTP and HTTPS protocols are supported');
-    }
-  } catch (error) {
+  const validation = validateUrl(url);
+  if (!validation.valid) {
     return res.status(400).json({ 
-      error: 'Invalid URL format',
+      error: validation.error,
       title: '',
       content: ''
     });

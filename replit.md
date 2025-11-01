@@ -84,6 +84,20 @@ None specified yet.
 - Content history is stored in localStorage
 - For production use, consider installing Tailwind CSS properly and implementing real authentication
 
-## Known Limitations
-- **URL Content Extraction**: The current implementation asks Gemini AI to analyze URLs, but Gemini cannot actually fetch web page content. This means the feature may not work reliably for extracting real content from URLs. For production, consider implementing server-side URL fetching with a library like `node-fetch` or Puppeteer to retrieve actual page content before sending it to Gemini for analysis.
-- **Vite allowedHosts**: Set to `true` for development to work with Replit's proxy. This is safe for development but should be restricted in production builds.
+## Backend Server
+The application now includes a Node.js/Express backend server (`server.js`) that:
+- Fetches real URL content using native fetch API
+- Parses HTML content with cheerio to extract titles and main text
+- Includes SSRF protection (blocks private IPs, localhost, and non-standard protocols)
+- Runs on localhost:3001 in development
+- Proxied through Vite dev/preview server via `/api` routes
+
+## Security Features
+- **SSRF Protection**: The backend validates URLs and blocks obvious private IP addresses, localhost, and non-HTTP(S) protocols
+- **CORS Configuration**: Uses exact-match origin validation in production
+- **URL Validation**: Enforces HTTPS/HTTP protocols and standard ports only
+
+## Security Considerations & Limitations
+- **DNS Rebinding Risk**: The current SSRF protection checks the URL hostname string but doesn't perform DNS resolution. An attacker with control over DNS could potentially bypass this by creating a domain that resolves to a private IP address. For high-security environments, consider implementing DNS-based validation using Node's dns.lookup() before fetching.
+- **Vite allowedHosts**: Set to `true` for development to work with Replit's proxy. This is development-only and doesn't affect production builds.
+- **Content History**: Stored in browser localStorage, which means data is local to each device and can be cleared by the user.

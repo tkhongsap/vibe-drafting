@@ -132,7 +132,9 @@ async function generateHashtags(summary: string, keyInsights: string[]): Promise
 }
 
 export async function fetchUrlContent(url: string): Promise<{ title: string; content: string }> {
-    const backendUrl = 'http://127.0.0.1:3001/api/fetch-url';
+    const backendUrl = import.meta.env.PROD 
+        ? '/api/fetch-url'
+        : 'http://127.0.0.1:3001/api/fetch-url';
     
     try {
         const response = await fetch(backendUrl, {

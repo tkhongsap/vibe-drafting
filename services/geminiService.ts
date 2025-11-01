@@ -132,28 +132,34 @@ async function generateHashtags(summary: string, keyInsights: string[]): Promise
 }
 
 export async function fetchUrlContent(url: string): Promise<{ title: string; content: string }> {
-    const model = 'gemini-2.5-pro';
-    const prompt = `Extract the title and the main article text from the following URL: ${url}. Please focus on the primary content and ignore boilerplate like headers, footers, and navigation menus.`;
-
+    const backendUrl = 'http://127.0.0.1:3001/api/fetch-url';
+    
     try {
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: urlFetchSchema,
+        const response = await fetch(backendUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ url }),
         });
-        const jsonText = response.text.trim();
-        const parsedJson = JSON.parse(jsonText);
-        if (parsedJson.title && parsedJson.content) {
-            return parsedJson;
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP ${response.status}`);
+        }
+        
+        if (data.title && data.content) {
+            return {
+                title: data.title,
+                content: data.content
+            };
         } else {
-            throw new Error("Invalid JSON structure from API.");
+            throw new Error("Invalid response structure from backend.");
         }
     } catch (error) {
         console.error(`Error fetching content for URL ${url}:`, error);
-        throw new Error(`Failed to fetch and parse content for the URL. It might be inaccessible.`);
+        throw new Error(`Failed to fetch content from the URL. ${error instanceof Error ? error.message : 'Please check if the URL is accessible.'}`);
     }
 }
 

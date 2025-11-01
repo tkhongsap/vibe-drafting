@@ -7,6 +7,7 @@ import { BookmarkIcon } from './icons/BookmarkIcon';
 import { contentHistoryService } from '../services/contentHistoryService';
 import { FacebookIcon } from './icons/FacebookIcon';
 import { InstagramIcon } from './icons/InstagramIcon';
+import { ThreadsIcon } from './icons/ThreadsIcon';
 
 interface ContentOutputProps {
   content: GeneratedContent | null;
@@ -43,7 +44,7 @@ const Placeholder: React.FC = () => (
 
 
 export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading, error }) => {
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'x' | 'facebook' | 'instagram'>('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'linkedin' | 'x' | 'threads' | 'facebook' | 'instagram'>('idle');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 
   const formatForLinkedIn = useCallback((): string => {
@@ -60,6 +61,14 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
     return `${summaryPart}\n\nKey Insights:\n${insightsPart}\n\n#ContentCreation #AI #Insights`.trim();
   }, [content]);
 
+  const formatForThreads = useCallback((): string => {
+    if (!content) return '';
+    const summaryPart = content.summary;
+    // Keep it concise, similar to X/Twitter
+    const insightsPart = content.keyInsights.length > 0 ? `\n\nKey Insights:\n${content.keyInsights.map(insight => `• ${insight}`).join('\n')}` : '';
+    return `${summaryPart}${insightsPart}\n\n#ContentStudio #AI #ThreadsApp`.trim();
+  }, [content]);
+
   const formatForFacebook = useCallback((): string => {
     if (!content) return '';
     const insightsText = content.keyInsights.map(insight => `✅ ${insight}`).join('\n');
@@ -72,7 +81,7 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
     return `${content.summary}\n.\n.\n.\n#Instagram #ContentCreation #AI #Tech #Business #Marketing #Insights #InstaGood`;
   }, [content]);
 
-   const copyToClipboard = (text: string, platform: 'linkedin' | 'x' | 'facebook' | 'instagram') => {
+   const copyToClipboard = (text: string, platform: 'linkedin' | 'x' | 'threads' | 'facebook' | 'instagram') => {
     navigator.clipboard.writeText(text).then(() => {
       setCopyStatus(platform);
       setTimeout(() => setCopyStatus('idle'), 3000);
@@ -90,6 +99,12 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
     copyToClipboard(text, 'x');
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleShareOnThreads = () => {
+    const text = formatForThreads();
+    copyToClipboard(text, 'threads');
+    window.open('https://www.threads.net/', '_blank', 'noopener,noreferrer');
   };
 
   const handleShareOnFacebook = () => {
@@ -168,6 +183,10 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
                     <button onClick={handleShareOnX} className="flex items-center gap-2 hover:text-slate-300 transition-colors duration-200">
                         <TwitterIcon className="w-5 h-5" />
                         <span className="text-sm">{copyStatus === 'x' ? 'Copied!' : 'Share'}</span>
+                    </button>
+                    <button onClick={handleShareOnThreads} className="flex items-center gap-2 hover:text-slate-300 transition-colors duration-200">
+                        <ThreadsIcon className="w-5 h-5" />
+                        <span className="text-sm">{copyStatus === 'threads' ? 'Copied!' : 'Share'}</span>
                     </button>
                      <button onClick={handleShareOnFacebook} className="flex items-center gap-2 hover:text-blue-600 transition-colors duration-200">
                         <FacebookIcon className="w-5 h-5" />

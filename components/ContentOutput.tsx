@@ -81,18 +81,14 @@ export const ContentOutput: React.FC<ContentOutputProps> = ({ content, isLoading
 
   const formatForX = useCallback((): string => {
     if (!content) return '';
-    const summaryPart = content.summary;
-    const insightsPart = content.keyInsights.map(insight => `• ${insight}`).join('\n');
     const hashtagsText = content.hashtags.join(' ');
-    return `${summaryPart}\n\nKey Insights:\n${insightsPart}\n\n${hashtagsText}`.trim();
+    return `${content.summary}\n\n${hashtagsText}`.trim();
   }, [content]);
 
   const formatForThreads = useCallback((): string => {
     if (!content) return '';
-    const summaryPart = content.summary;
-    const insightsPart = content.keyInsights.map(insight => `• ${insight}`).join('\n');
     const hashtagsText = content.hashtags.join(' ');
-    return `${summaryPart}\n\nKey Insights:\n${insightsPart}\n\n${hashtagsText}`.trim();
+    return `${content.summary}\n\n${hashtagsText}`.trim();
   }, [content]);
   
   const formatForFacebook = useCallback((): string => {

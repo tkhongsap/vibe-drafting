@@ -3,7 +3,7 @@ import { ContentInput } from './components/ContentInput';
 import { ContentOutput } from './components/ContentOutput';
 import { analyzeContent } from './services/geminiService';
 // FIX: Import 'View' type from the central types file.
-import type { GeneratedContent, User, View, UrlContent } from './types';
+import type { GeneratedContent, User, View, UrlContent, Tone, Style } from './types';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
 import { LandingPage } from './components/LandingPage';
@@ -28,7 +28,8 @@ const App: React.FC = () => {
   const [inputText, setInputText] = useState<string>('');
   const [urls, setUrls] = useState<UrlContent[]>([]);
   const [imageData, setImageData] = useState<ImageData[]>([]);
-  const [wordCount, setWordCount] = useState<number>(150);
+  const [tone, setTone] = useState<Tone>('Professional');
+  const [style, setStyle] = useState<Style>('LinkedIn Post');
 
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -76,16 +77,17 @@ const App: React.FC = () => {
 
     try {
       let result: GeneratedContent;
+      const commonParams = { tone, style };
       switch (inputType) {
         case 'text':
-          result = await analyzeContent({ type: 'text', text: inputText, wordCount });
+          result = await analyzeContent({ type: 'text', text: inputText, ...commonParams });
           break;
         case 'image':
           if (imageData.length === 0) throw new Error("Image data not found.");
-          result = await analyzeContent({ type: 'image', images: imageData, wordCount });
+          result = await analyzeContent({ type: 'image', images: imageData, ...commonParams });
           break;
         case 'url':
-          result = await analyzeContent({ type: 'url', urls: urls, wordCount });
+          result = await analyzeContent({ type: 'url', urls: urls, ...commonParams });
           break;
         default:
           throw new Error("Invalid input type");
@@ -98,7 +100,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, inputType, imageData, urls, wordCount]);
+  }, [inputText, inputType, imageData, urls, tone, style]);
 
   if (!currentUser) {
     return <LandingPage onLoginSuccess={handleLoginSuccess} />;
@@ -131,8 +133,10 @@ const App: React.FC = () => {
                               setUrls={setUrls}
                               imageData={imageData}
                               setImageData={setImageData}
-                              wordCount={wordCount}
-                              setWordCount={setWordCount}
+                              tone={tone}
+                              setTone={setTone}
+                              style={style}
+                              setStyle={setStyle}
                               onAnalyze={handleAnalyze}
                               isLoading={isLoading}
                               isAnalyzeDisabled={isAnalyzeDisabled()}

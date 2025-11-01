@@ -1,6 +1,9 @@
 // FIX: Added 'View' type to be shared across components.
 export type View = 'home' | 'explore' | 'notifications' | 'history' | 'profile';
 
+export type Tone = 'Professional' | 'Casual' | 'Witty' | 'Informative' | 'Inspirational';
+export type Style = 'LinkedIn Post' | 'Twitter Post' | 'Twitter Thread' | 'Article Summary';
+
 export interface GeneratedContent {
   summary: string;
   keyInsights: string[];

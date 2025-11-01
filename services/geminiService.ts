@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { GeneratedContent, ImageData, TrendTopic, UrlContent } from '../types';
+import type { GeneratedContent, ImageData, TrendTopic, UrlContent, Tone, Style } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -11,7 +11,7 @@ const schema = {
   properties: {
     summary: {
       type: Type.STRING,
-      description: 'A concise summary of all the provided content, synthesized into a single cohesive overview.',
+      description: "The main content, formatted as a social media post/thread/summary according to the user's request. It should be a concise synthesis of all provided content, adhering to the specified tone and style.",
     },
     keyInsights: {
       type: Type.ARRAY,
@@ -88,7 +88,8 @@ interface AnalyzeParams {
     text?: string;
     images?: ImageData[];
     urls?: UrlContent[];
-    wordCount: number;
+    tone: Tone;
+    style: Style;
 }
 
 async function generateHashtags(summary: string, keyInsights: string[]): Promise<string[]> {
@@ -190,13 +191,25 @@ export async function getTrendingTopics(): Promise<TrendTopic[]> {
 export async function analyzeContent(params: AnalyzeParams): Promise<GeneratedContent> {
   let model: string;
   let contents: any;
+  const { type, tone, style } = params;
 
   const basePrompt = `
-    Based on the provided content, generate a structured response.
-    The response should include:
-    1. A concise summary synthesizing all content of about ${params.wordCount} words.
-    2. 3-5 key insights or main takeaways from the combined content.
-    3. 2-3 interesting or surprising facts from across all content.
+    You are an expert social media content creator. Your task is to analyze the provided content and generate a structured response for a social media post based on the specified style.
+    
+    **Instructions:**
+    1.  **Style & Formatting:**
+        - Your output must be a **'${style}'**.
+        - The tone must be **'${tone}'**.
+        - **Length:** Determine the optimal length based on the platform. LinkedIn posts can be longer and more detailed, while Twitter posts must be concise.
+    2.  **Specific Style Guidelines:**
+        - If the style is **'LinkedIn Post'**: Write in a professional, engaging manner. Use whitespace, emojis, or bullet points to improve readability. End with a question or a call-to-action to encourage comments.
+        - If the style is **'Twitter Post'**: Keep it short, punchy, and well under the character limit. Use hashtags effectively.
+        - If the style is **'Twitter Thread'**: Create a series of connected, numbered tweets (e.g., 1/n). Start with a strong hook and end with a summary or call-to-action. Format the entire thread as a single string, with each tweet separated by "\\n\\n---\\n\\n".
+        - If the style is **'Article Summary'**: Provide a comprehensive summary suitable for a blog post or newsletter.
+    3.  **Output:** Based on all the provided content, generate the following in the required JSON format:
+        - **summary:** The main content, formatted according to the instructions above.
+        - **keyInsights:** 3-5 key insights or main takeaways from the combined content.
+        - **interestingFacts:** 2-3 interesting or surprising facts from across all content.
   `;
 
   switch (params.type) {

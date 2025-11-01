@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import type { InputType } from '../App';
-import type { ImageData, User, UrlContent } from '../types';
+import type { ImageData, User, UrlContent, Tone, Style } from '../types';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { LinkIcon } from './icons/LinkIcon';
@@ -21,8 +21,10 @@ interface ContentInputProps {
   setUrls: React.Dispatch<React.SetStateAction<UrlContent[]>>;
   imageData: ImageData[];
   setImageData: React.Dispatch<React.SetStateAction<ImageData[]>>;
-  wordCount: number;
-  setWordCount: (count: number) => void;
+  tone: Tone;
+  setTone: (tone: Tone) => void;
+  style: Style;
+  setStyle: (style: Style) => void;
   onAnalyze: () => void;
   isLoading: boolean;
   isAnalyzeDisabled: boolean;
@@ -208,7 +210,7 @@ const UrlInput: React.FC<{ urls: UrlContent[]; setUrls: React.Dispatch<React.Set
 export const ContentInput: React.FC<ContentInputProps> = (props) => {
   const { 
     user, inputType, setInputType, inputText, setInputText, urls, setUrls, imageData, setImageData,
-    wordCount, setWordCount, onAnalyze, isLoading, isAnalyzeDisabled 
+    tone, setTone, style, setStyle, onAnalyze, isLoading, isAnalyzeDisabled 
   } = props;
   
   const [loadingText, setLoadingText] = useState('Analyzing...');
@@ -218,6 +220,9 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
     "Polishing post...",
     "Making it viral...",
   ];
+
+  const toneOptions: Tone[] = ['Professional', 'Casual', 'Witty', 'Informative', 'Inspirational'];
+  const styleOptions: Style[] = ['LinkedIn Post', 'Twitter Post', 'Twitter Thread', 'Article Summary'];
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -281,23 +286,21 @@ export const ContentInput: React.FC<ContentInputProps> = (props) => {
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                    <label htmlFor="word-count" className="text-sm font-medium text-slate-400">
-                        Words
-                    </label>
-                    <input
-                        type="number"
-                        id="word-count"
-                        value={wordCount}
-                        onChange={(e) => setWordCount(Math.max(50, Math.min(1000, Number(e.target.value))))}
-                        min="50" max="1000" step="10"
-                        className="w-20 bg-slate-800 border border-slate-700 rounded-md p-1 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        disabled={isLoading}
-                    />
+                    <label htmlFor="style-select" className="text-sm font-medium text-slate-400">Style</label>
+                    <select id="style-select" value={style} onChange={(e) => setStyle(e.target.value as Style)} disabled={isLoading} className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 transition-colors">
+                        {styleOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <label htmlFor="tone-select" className="text-sm font-medium text-slate-400">Tone</label>
+                    <select id="tone-select" value={tone} onChange={(e) => setTone(e.target.value as Tone)} disabled={isLoading} className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 transition-colors">
+                        {toneOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
                 </div>
                 <button
                     onClick={onAnalyze}
                     disabled={isAnalyzeDisabled}
-                    className="flex items-center justify-center px-6 py-2 border border-transparent text-base font-bold rounded-full text-white bg-blue-500 hover:bg-blue-600 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="flex items-center justify-center px-5 py-2 border border-transparent text-sm font-bold rounded-lg text-white bg-blue-500 hover:bg-blue-600 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                     {isLoading ? loadingText : 'Post'}
                 </button>

@@ -11,9 +11,15 @@ Content Studio is an AI-powered web application that helps users analyze content
 **Current State**: The application is fully configured and running in the Replit environment with all dependencies installed and the Gemini API integrated.
 
 ## Recent Changes
-*Last Updated: November 1, 2025*
+*Last Updated: November 3, 2025*
 
-### Production Deployment Fix (Latest)
+### Authentication Redirect URI Fix (Latest)
+- **Fixed "invalid_redirect_uri" error** in webview preview during login
+- **Updated OAuth callback URL**: Now uses REPLIT_DOMAINS environment variable instead of req.hostname
+- **Consistent authentication**: Login works in both webview preview and published site
+- **Single strategy approach**: Removed dynamic per-hostname strategies, using one consistent strategy
+
+### Production Deployment Fix
 - **Fixed "Cannot GET /" error** in production deployment
 - **Unified server architecture**: Express now serves both API and static files in production
 - **Production mode detection**: Uses NODE_ENV environment variable

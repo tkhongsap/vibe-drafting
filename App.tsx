@@ -113,7 +113,7 @@ const App: React.FC = () => {
             currentView={currentView}
             setView={setCurrentView}
         />
-        <div className="flex-grow flex-shrink-0 w-full max-w-[600px] border-x border-slate-700">
+        <div className="flex-grow flex-shrink-0 w-full max-w-[720px] border-x border-slate-700">
             <header className="sticky top-0 z-10 p-4 border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
                 <h1 className="text-xl font-bold capitalize">{currentView}</h1>
             </header>
